@@ -45,9 +45,9 @@ def filter_data(df):
     # 5. Opcjonalnie: usuń rekordy z brakującymi kluczowymi danymi (np. wynik meczu)
     df_filtered = df_filtered.dropna(subset=['FTHome', 'FTAway', 'FTResult', 'HTHome', 'HTAway', 'HTResult', "HomeTeam", "AwayTeam"], how='any')
 
-    print(f"Po filtrze: {len(df_filtered)} meczów (z {len(df)} oryginalnych)")
-    print(f"Ligi: {sorted(df_filtered['Division'].unique())}")
-    print(f"Zakres dat: {df_filtered['MatchDate'].min()} → {df_filtered['MatchDate'].max()}")
+    #print(f"Po filtrze: {len(df_filtered)} meczów (z {len(df)} oryginalnych)")
+    #print(f"Ligi: {sorted(df_filtered['Division'].unique())}")
+    #print(f"Zakres dat: {df_filtered['MatchDate'].min()} → {df_filtered['MatchDate'].max()}")
 
     return df_filtered
 
@@ -82,7 +82,7 @@ def clean_data(matches_filtered):
             # zastąp wszystkie błędne wartości losowym czasem
             matches_filtered.loc[invalid_mask, 'MatchTime'] = [random_time() for _ in range(num_invalid)]
 
-    # --- 8️⃣ Kolumny Elo ---
+    # --- Kolumny Elo ---
     elo_cols = ["HomeElo", "AwayElo"]
     for col in elo_cols:
         if col in matches_filtered.columns:
@@ -93,7 +93,7 @@ def clean_data(matches_filtered):
                 #print(f"Kolumna '{col}': {num_invalid} brakujących wartości → zastąpiono średnią = {mean_value:.2f}")
                 matches_filtered.loc[invalid_mask, col] = mean_value
 
-    # --- 6️⃣ Kolumny Form3 ---
+    # --- Kolumny Form3 ---
     forms_3_cols = ["Form3Home", "Form3Away"]
     for col in forms_3_cols:
         if col in matches_filtered.columns:
@@ -109,7 +109,7 @@ def clean_data(matches_filtered):
             # upewnij się, że typ int
             matches_filtered[col] = matches_filtered[col].astype(int)
 
-    # --- 7️⃣ Kolumny Form5 ---
+    # --- Kolumny Form5 ---
     forms_5_cols = ["Form5Home", "Form5Away"]
     for col in forms_5_cols:
         if col in matches_filtered.columns:
@@ -122,7 +122,7 @@ def clean_data(matches_filtered):
                 matches_filtered.loc[invalid_mask, col] = mean_value
             matches_filtered[col] = matches_filtered[col].astype(int)
 
-    # --- 5️⃣ Kolumny ze statystykami meczowymi ---
+    # --- Kolumny ze statystykami meczowymi ---
     match_stats_cols = [
         'HomeShots', 'AwayShots',
         'HomeTarget', 'AwayTarget',
@@ -151,7 +151,7 @@ def clean_data(matches_filtered):
             # upewnij się, że kolumna ma typ int
             matches_filtered[col] = matches_filtered[col].astype(int)
 
-    # --- 4️⃣ Kolumny z kursami i over/under ---
+    # --- Kolumny z kursami i over/under ---
     odds_cols = [
         'OddHome', 'OddDraw', 'OddAway',
         'MaxHome', 'MaxDraw', 'MaxAway',
@@ -184,7 +184,7 @@ def clean_data(matches_filtered):
                     #f"Kolumna '{col}': {num_invalid} nieliczbowych lub pustych wartości → zastąpiono średnią = {mean_value:.4f}")
                 matches_filtered.loc[invalid_mask, col] = mean_value
 
-    # --- 2️⃣ Kolumny z handicapami ---
+    # --- Kolumny z handicapami ---
     handicap_cols = ["HandiHome", "HandiAway"]
 
     for col in handicap_cols:
@@ -198,14 +198,13 @@ def clean_data(matches_filtered):
                  #   f"Kolumna '{col}': {num_invalid} ujemnych lub pustych wartości → zastąpiono średnią = {mean_value:.4f}")
                 matches_filtered.loc[invalid_mask, col] = mean_value
 
-    # Lista kolumn, które mają być sprawdzone
     prob_cols = ['C_LTH', 'C_LTA', 'C_VHD', 'C_VAD', 'C_HTB', 'C_PHB']
 
     for col in prob_cols:
         if col in matches_filtered.columns:
             mean_value = matches_filtered[col].mean(skipna=True)
 
-            # maska błędnych lub brakujących wartości
+            # maska
             invalid_mask = (matches_filtered[col].isna()) | (matches_filtered[col] < 0.0001) | (matches_filtered[col] > 0.9999)
             num_invalid = invalid_mask.sum()
 

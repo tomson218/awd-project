@@ -5,18 +5,18 @@ import numpy as np
 import pandas as pd
 
 def calculate_values(matches_after_cleaning: pd.DataFrame) -> pd.DataFrame:
-    numeric_cols = matches_after_cleaning.select_dtypes(include='number').columns # wybór jedynie kolumn numerycznych
+    numeric_cols = matches_after_cleaning.select_dtypes(include='number').columns
 
     ranges = pd.DataFrame({
-        'min': matches_after_cleaning[numeric_cols].min(),
-        'max': matches_after_cleaning[numeric_cols].max(),
-        "average": matches_after_cleaning[numeric_cols].mean(),
-        'std': matches_after_cleaning[numeric_cols].std(),  # <-- tutaj dodane odchylenie standardowe
-        'median': matches_after_cleaning[numeric_cols].median(),
-        'Q1': matches_after_cleaning[numeric_cols].quantile(0.25),
-        'Q3': matches_after_cleaning[numeric_cols].quantile(0.75),
-        'quantile_0.1': matches_after_cleaning[numeric_cols].quantile(0.1),
-        'quantile_0.9': matches_after_cleaning[numeric_cols].quantile(0.9)
+        'Minimum': matches_after_cleaning[numeric_cols].min(),
+        'Maksimum': matches_after_cleaning[numeric_cols].max(),
+        "Średnia": matches_after_cleaning[numeric_cols].mean(),
+        'Odchylenie': matches_after_cleaning[numeric_cols].std(),
+        'Mediana': matches_after_cleaning[numeric_cols].median(),
+        'Kwartyl Q1': matches_after_cleaning[numeric_cols].quantile(0.25),
+        'Kwartyl Q3': matches_after_cleaning[numeric_cols].quantile(0.75),
+        'Kwantyl_0.1': matches_after_cleaning[numeric_cols].quantile(0.1),
+        'Kwantyl_0.9': matches_after_cleaning[numeric_cols].quantile(0.9)
     })
 
     return ranges
@@ -61,11 +61,8 @@ def linear_regression():
 def descriptive_stats_all():
     print(calculate_values(matches_after_cleaning))
 
-    #PEARSON_CORRELATION
     r, p_value = pearson_correlation()
     print(f"Współczynnik korelacji r (wpływ wyniku do przerwy na ostateczny wynik meczu) = {r:.2f}")
-    #print(f"P-wartość = {p_value:.4f}")
 
-    #LINEAR_REGRESSION 
     a, b = linear_regression()
     print(f"Wzór regresji: Y = {a:.2f} * X + {b:.2f}")

@@ -1,13 +1,3 @@
-"""5. Wizualizację wybranych danych w postaci:
-• wykresów kołowych, słupkowych prezentujących liczebność rekordów w
-poszczególnych klasach (kategoriach),
-• wykresów prezentujących szeregi czasowe (dla predykcji),
-• histogramy zmiennych,
-• wykresów pudełkowych,
-• wykresów wiolinowych,
-• wykresów rozrzutu dla wybranych par zmiennych oraz regresji liniowej między nimi.
-"""
-
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -16,10 +6,6 @@ from cleared_data import matches_after_cleaning
 from sklearn.linear_model import LinearRegression
 
 def pie_chart():
-    """
-    Wykres kołowy: udział każdej ligi w liczbie unikalnych drużyn.
-    Etykiety: TYLKO procenty (np. "25.0%").
-    """
     divisions = matches_after_cleaning['Division'].unique()
     counts = []
 
@@ -28,7 +14,6 @@ def pie_chart():
         unique_teams = set(df_div['HomeTeam']).union(set(df_div['AwayTeam']))
         counts.append(len(unique_teams))
 
-    # Mapowanie kodów na pełne nazwy
     league_names = {
         'I1': 'Serie A',
         'SP1': 'La Liga',
@@ -38,9 +23,8 @@ def pie_chart():
     }
     labels = [league_names.get(div, div) for div in divisions]
 
-    # 3. Najprostszy wykres kołowy
     plt.pie(counts, labels=labels, autopct='%1.1f%%')
-    plt.title("Udział lig w liczbie unikalnych drużyn")
+    plt.title("Procentowy wskażnik drużyn w poszczególnych ligach na przełomie sezonów 2022/2025")
     plt.show()
 
 
@@ -53,7 +37,6 @@ def bar_chart():
         unique_teams = set(df_div['HomeTeam']).union(set(df_div['AwayTeam']))
         counts.append(len(unique_teams))
 
-    # Mapowanie kodów lig na pełne nazwy (opcjonalnie)
     league_names = {
         'I1': 'Serie A',
         'SP1': 'La Liga',
@@ -66,13 +49,13 @@ def bar_chart():
     plt.figure(figsize=(10, 6))
     bars = plt.bar(labels, counts, color=['#9467bd', '#1f77b4', '#2ca02c', '#d62728', '#ff7f0e'])
 
-    # Dodaj liczby na słupkach
+    # Liczby na slupkach
     for bar in bars:
         height = bar.get_height()
         plt.text(bar.get_x() + bar.get_width() / 2., height + 0.3,
                  f'{int(height)}', ha='center', va='bottom', fontsize=12, fontweight='bold')
 
-    plt.title("Liczba unikalnych drużyn w każdej lidze (2022–2025)", fontsize=16, pad=20)
+    plt.title("Liczba drużyn w każdej lidze w sezonach 2022–2025", fontsize=16, pad=20)
     plt.ylabel("Liczba drużyn", fontsize=12)
     plt.xlabel("Liga", fontsize=12)
     plt.ylim(0, max(counts) * 1.15)
@@ -80,31 +63,24 @@ def bar_chart():
     plt.show()
 
 
-# --- Przykład użycia ---
-#fig = bar_chart()
-#plt.show()
-
 def bar_chart_cards_global():
     df = matches_after_cleaning.copy()
 
-    # --- 1. Oblicz średnie ---
     avg_yellow_home = df['HomeYellow'].mean().round(2)
     avg_yellow_away = df['AwayYellow'].mean().round(2)
     avg_red_home = df['HomeRed'].mean().round(2)
     avg_red_away = df['AwayRed'].mean().round(2)
 
-    # --- 2. Dane do wykresu ---
     labels = [
-        'Żółte\n(gospodarze)',
-        'Żółte\n(goście)',
-        'Czerwone\n(gospodarze)',
-        'Czerwone\n(goście)'
+        'Żółte (gospodarze)',
+        'Żółte (goście)',
+        'Czerwone (gospodarze)',
+        'Czerwone (goście)'
     ]
     values = [avg_yellow_home, avg_yellow_away, avg_red_home, avg_red_away]
     colors = ['#ffcc00', '#ffcc00', '#ff3333', '#ff3333']  # żółty i czerwony
     edge_colors = ['#cc9900', '#cc9900', '#cc0000', '#cc0000']
 
-    # --- 3. Wykres ---
     plt.figure(figsize=(10, 6))
 
     bars = plt.bar(
@@ -115,7 +91,6 @@ def bar_chart_cards_global():
         width=0.6
     )
 
-    # Etykiety na słupkach
     for bar, val in zip(bars, values):
         plt.text(
             bar.get_x() + bar.get_width() / 2,
@@ -126,7 +101,7 @@ def bar_chart_cards_global():
         )
 
     # --- 4. Formatowanie ---
-    plt.title('Średnia liczba kartek na mecz\n(gospodarze vs goście)',
+    plt.title('Średnia liczba kartek na mecz z podziałem na gospodarza i gościa',
               fontsize=16, pad=20, fontweight='bold')
     plt.ylabel('Średnia liczba kartek', fontsize=12)
     plt.ylim(0, max(values) * 1.3)
@@ -148,7 +123,6 @@ def bar_chart_cards_global():
 def time_series_plot():
     clubs_to_compare = ['Real Madrid', 'Ajax', 'Bayern Munich', 'Inter', 'Paris SG']
 
-    # --- 1. Przygotuj dane ---
     home = matches_after_cleaning[['MatchDate', 'HomeTeam', 'HomeElo']].copy()
     home = home.rename(columns={'HomeTeam': 'club', 'HomeElo': 'elo'})
 
@@ -160,14 +134,11 @@ def time_series_plot():
     club_data['MatchDate'] = pd.to_datetime(club_data['MatchDate'])
     club_data = club_data.sort_values(['club', 'MatchDate'])
 
-    # --- 2. Rysuj wykres ręcznie ---
     plt.figure(figsize=(14, 8))
 
-    # Kolory i markery dla każdego klubu
     colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
     markers = ['o', 's', '^', 'D', 'v']
     color_map = dict(zip(clubs_to_compare, colors))
-    #marker_map = dict(zip(clubs_to_compare, markers))
 
     # Rysuj linię dla każdego klubu
     for club in clubs_to_compare:
@@ -176,17 +147,15 @@ def time_series_plot():
             data['MatchDate'], data['elo'],
             label=club,
             color=color_map[club],
-            #marker=marker_map[club],
             markersize=6,
             linewidth=2,
             linestyle='-',
             alpha=0.9
         )
 
-    # --- 3. Formatowanie ---
-    plt.title('Trendy Elo dla wybranych klubów (dom + wyjazd)', fontsize=16, pad=20, fontweight='bold')
+    plt.title('Szereg czasowy dla 5 najlepszych drużyn z każdej lig wg wskaźnika Elo', fontsize=16, pad=20, fontweight='bold')
     plt.xlabel('Data', fontsize=12)
-    plt.ylabel('Rating Elo', fontsize=12)
+    plt.ylabel('Wskaźnik Elo', fontsize=12)
     plt.grid(alpha=0.3, linestyle='--', linewidth=0.7)
     plt.legend(
         title='Klub',
@@ -203,50 +172,31 @@ def time_series_plot():
 
 # --- 4. Histogram ---
 def histogram():
-    """
-        Podstawowy histogram bramek (FTHome) – TYLKO matplotlib.
-        Bez seaborn, bez KDE, bez bajerów.
-        """
-    if 'FTHome' not in matches_after_cleaning.columns:
-        print("Błąd: brak kolumny 'FTHome'")
-        return
-
     goals = matches_after_cleaning['FTHome'].dropna().astype(int)
 
-    plt.figure(figsize=(10, 6))
-
-    # Podstawowy histogram
-    counts, bins_edges, patches = plt.hist(
+    plt.figure(figsize=(11, 6))
+    n, bins, patches = plt.hist(
         goals,
-        bins=10,
-        color='#1f77b4',
+        bins=range(0, goals.max() + 2),  # zostaje
+        color='#2E86AB',
         edgecolor='black',
-        alpha=0.7
+        alpha=0.8
     )
 
-    plt.title("Histogram bramek drużyny domowej (FTHome)",
-              fontsize=16, fontweight='bold')
-    plt.xlabel("Liczba bramek", fontsize=12)
+    plt.title("Histogram liczby goli strzelonych przez gospodarzy", fontsize=16, fontweight='bold', pad=15)
+    plt.xlabel("Liczba goli", fontsize=12)
     plt.ylabel("Liczba meczów", fontsize=12)
 
-    bins = range(int(goals.min()), int(goals.max()) + 2)  # każdy słupek = 1 gol
-
-    # Dodaj liczby na słupkach
-    for count, bin_edge in zip(counts, bins_edges):
-        if count > 0:
-            plt.text(bin_edge + (bins_edges[1] - bins_edges[0]) / 2,
-                     count + max(counts) * 0.01,
-                     f'{int(count)}',
-                     ha='center', va='bottom', fontsize=10, fontweight='bold')
-
     plt.grid(axis='y', alpha=0.3, linestyle='--')
-    plt.xticks(range(0, int(goals.max()) + 1))
+    plt.xticks(range(0, goals.max() + 1))
+    plt.tight_layout()
     plt.show()
 
-# --- 5. Wykres pudełkowy (box plot) ---
+
+# --- 5. Wykres pudełkowy ---
 def box_plot():
     divisions = matches_after_cleaning['Division'].unique()
-    all_elo_ratings_data = []  # POPRAWKA: zdefiniuj listę!
+    all_elo_ratings_data = [] 
 
     league_names = {
         'I1': 'Serie A',
@@ -258,23 +208,23 @@ def box_plot():
 
     for div in divisions:
         df_div = matches_after_cleaning[matches_after_cleaning['Division'] == div]
-        # Łączymy Elo domowe i wyjazdowe
+        
+        # Łączenie
         elo_ratings = df_div['HomeElo'].dropna().tolist() + df_div['AwayElo'].dropna().tolist()
-        all_elo_ratings_data.append(elo_ratings)  # teraz działa
+        all_elo_ratings_data.append(elo_ratings)
 
     plt.figure(figsize=(12, 6))
     plt.boxplot(all_elo_ratings_data, patch_artist=True,
                 boxprops=dict(facecolor='lightblue'), medianprops=dict(color='blue'))
 
     plt.xticks(range(1, len(divisions) + 1), divisions, rotation=45)
-    plt.xlabel("Dywizja")
-    plt.ylabel("Elo Rating")  # POPRAWKA: nie "Liczba goli"
-    plt.title("Rozkład Elo (Home + Away) wg Division")  # POPRAWKA
+    plt.xlabel("Liga")
+    plt.ylabel("Wskaźnik Elo")
+    plt.title("Rozkład dla wskaznika Elo wg poszczególnych lig")
     plt.show()
 
 # --- 6. Wykres wiolinowy ---
 def violin_plot():
-    # --- 1. Mapowanie kodów lig na pełne nazwy ---
     league_names = {
         'I1': 'Serie A',
         'SP1': 'La Liga',
@@ -283,16 +233,15 @@ def violin_plot():
         'N1': 'Eredivisie',
     }
 
-    # --- 2. Przygotowanie danych ---
     divisions = matches_after_cleaning['Division'].unique()
     all_fouls_data = []
     labels = []
-    medians = []  # do sortowania
+    medians = []
 
     for div in divisions:
         df_div = matches_after_cleaning[matches_after_cleaning['Division'] == div]
 
-        # Łączymy faule: HomeFouls + AwayFouls (z każdego meczu)
+        # Łączenie fauli
         fouls = pd.concat([
             df_div['HomeFouls'].dropna(),
             df_div['AwayFouls'].dropna()
@@ -303,7 +252,7 @@ def violin_plot():
         labels.append(label)
         medians.append(fouls.median())
 
-    # --- 3. Sortowanie: od ligi z NAJWIĘCEJ fauli (najwyższa mediana) ---
+    # --- 3. Sortowanie: od ligi
     sorted_indices = np.argsort(medians)[::-1]
     all_fouls_data = [all_fouls_data[i] for i in sorted_indices]
     labels = [labels[i] for i in sorted_indices]
@@ -317,37 +266,33 @@ def violin_plot():
         showextrema=True
     )
 
-    # Kolorowanie wiolin
     for pc in parts['bodies']:
         pc.set_facecolor('lightcoral')
         pc.set_edgecolor('darkred')
         pc.set_alpha(0.7)
 
-    # Mediana – gruba, czerwona linia
     parts['cmedians'].set_color('red')
     parts['cmedians'].set_linewidth(2.5)
 
-    # Wąsy (min/max)
     parts['cmins'].set_color('black')
     parts['cmaxes'].set_color('black')
     parts['cbars'].set_color('black')
 
-    # --- 5. Etykiety i formatowanie ---
+
     plt.xticks(range(1, len(labels) + 1), labels, rotation=45, ha='right', fontsize=11)
     plt.xlabel("Liga", fontsize=13)
     plt.ylabel("Liczba fauli w meczu", fontsize=13)
-    plt.title("Rozkład fauli (Home + Away) w meczu – posortowane od najbrudniejszej ligi",
+    plt.title("Rozkład fauli dla drużyn pogrupowane według poszczególnych lig",
               fontsize=15, pad=20, fontweight='bold')
 
     plt.grid(axis='y', alpha=0.3, linestyle='--')
     plt.tight_layout()
     plt.show()
 
-    return plt.gcf()
+    #return plt.gcf()
 
 # --- 7. Wykres rozrzutu + regresja liniowa ---
 def scatter_plot():
-    # dane
     X_home = matches_after_cleaning["HomeTarget"].values.reshape(-1, 1)
     Y_home = matches_after_cleaning["FTHome"].values
     X_away = matches_after_cleaning["AwayTarget"].values.reshape(-1, 1)
@@ -364,20 +309,19 @@ def scatter_plot():
     # tworzymy dwa wykresy obok siebie
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 
-    # --- HOME ---
     axes[0].scatter(X_home, Y_home, color='blue', alpha=0.6, label='Dane')
     axes[0].plot(X_home, model_home.predict(X_home), color='red', label=f'y = {a_home:.2f}x + {b_home:.2f}')
-    axes[0].set_title("Regresja: HomeTarget vs FTHome")
-    axes[0].set_xlabel("HomeTarget")
-    axes[0].set_ylabel("FTHome")
+    axes[0].set_title("Regresja: Strzałów celnych vs Liczba goli strzelonych w meczu przez gospodarza")
+    axes[0].set_xlabel("Strzały celne gospodarza")
+    axes[0].set_ylabel("Liczba bramek gospodarza strzelona w meczu")
     axes[0].legend()
 
     # --- AWAY ---
     axes[1].scatter(X_away, Y_away, color='green', alpha=0.6, label='Dane')
     axes[1].plot(X_away, model_away.predict(X_away), color='red', label=f'y = {a_away:.2f}x + {b_away:.2f}')
-    axes[1].set_title("Regresja: AwayTarget vs FTAway")
-    axes[1].set_xlabel("AwayTarget")
-    axes[1].set_ylabel("FTAway")
+    axes[1].set_title("Regresja: Strzałów celnych vs Liczba goli strzelonych w meczu przez gościa")
+    axes[1].set_xlabel("Strzały celne gościa")
+    axes[1].set_ylabel("Liczba bramek gościa strzelona w meczu")
     axes[1].legend()
 
     plt.tight_layout()
