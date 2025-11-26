@@ -1,0 +1,16 @@
+{
+  "cv_accuracy": 0.5264291731040366,
+  "cv_std": 0.014230429709293169,
+  "test_accuracy": 0.5753424657534246,
+  "test_f1": 0.5718393494541144,
+  "best_params": {
+    "depth": 8,
+    "class_weights": [
+      1,
+      1.8,
+      1.1
+    ],
+    "learning_rate": 0.1,
+    "iterations": 1000
+  }
+}

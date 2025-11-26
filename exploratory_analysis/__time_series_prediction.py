@@ -1,4 +1,4 @@
-import numpy as np
+"""import numpy as np
 from sklearn.model_selection import train_test_split
 import pandas as pd
 import os
@@ -53,4 +53,4 @@ X_test_df.to_csv("data/splits/X_test.csv", index=False)
 y_train_df.to_csv("data/splits/y_train.csv", index=False)
 y_test_df.to_csv("data/splits/y_test.csv", index=False)
 
-print("Zapisano do CSV!")
+print("Zapisano do CSV!")"""

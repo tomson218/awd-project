@@ -1,4 +1,4 @@
-# clustering.py
+""""# clustering.py
 import pandas as pd
 import numpy as np
 from sklearn.cluster import KMeans
@@ -151,3 +151,4 @@ df[['Cluster', 'Cluster_Name'] + numeric_cols + ['FTResult']].head(10)
 
 print(f"\nKlasteryzacja zakończona! K = {optimal_k}")
 print(f"Rozkład klastrów:\n{pd.Series(cluster_labels).value_counts().sort_index()}")
+"""

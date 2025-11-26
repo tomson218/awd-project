@@ -1,4 +1,4 @@
-import pandas as pd
+"""import pandas as pd
 import numpy as np
 import os
 from sklearn.model_selection import StratifiedKFold
@@ -26,3 +26,4 @@ y_train = np.argmax(y_train_onehot, axis=1)
 y_test  = np.argmax(y_test_onehot, axis=1)
 
 print(f"X_train: {X_train.shape}, y_train: {y_train.shape}")
+"""
