@@ -30,9 +30,9 @@ test_pool = Pool(X_test, y_test)
 
 # === 3. GRID SEARCH (Twoja siatka – działa!) ===
 param_grid = {
-    'iterations': [1000, 1500, 200],
-    'depth': [6, 8, 10],
-    'learning_rate': [0.1, 0.3, 0.5],
+    'iterations': [5, 10, 20, 50, 100, 200, 500, 1000, 1500],
+    'depth': [6, 7, 8, 9, 10],
+    'learning_rate': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7],
     'class_weights': [None, [1.0, 1.8, 1.1]]
 }
 
@@ -58,7 +58,30 @@ print(f"\n5-fold CV – Accuracy: {cv_mean:.4f} ± {cv_std:.4f}")
 # === 5. FINALNY MODEL ===
 best_params = grid_result["params"]
 final_model = CatBoostClassifier(**best_params, loss_function="MultiClass", random_seed=42)
-final_model.fit(train_pool, verbose=200)
+start_time = time.time()
+final_model.fit(train_pool, verbose=200,  eval_set=test_pool,plot=True)
+end_time = time.time()
+training_time = end_time - start_time
+print(f"Czas uczenia modelu: {training_time:.2f} s")
+
+print(f"Czas uczenia modelu: {training_time:.2f} s")
+
+# Pobranie historii metryk
+evals_result = final_model.get_evals_result()
+train_loss = evals_result['learn']['MultiClass']
+val_loss = evals_result['validation']['MultiClass']
+
+# Wykres
+plt.figure(figsize=(8,5))
+plt.plot(train_loss, label='Train MultiClass Loss')
+plt.plot(val_loss, label='Validation MultiClass Loss')
+plt.xlabel('Iteracja')
+plt.ylabel('MultiClass Loss')
+plt.title('Uczenie i walidacja – MultiClass Loss')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
 
 # === 6. ZAPIS MODELU ===
 os.makedirs("models", exist_ok=True)
@@ -147,19 +170,20 @@ X_sample_df = pd.DataFrame(X_test[sample_idx], columns=feature_names)
 
 # 4. Wybierz tylko kolumny, które chcesz pokazać
 cols_to_show = ['HomeElo', 'AwayElo', 'HomeTarget', 'AwayTarget', 'C_LTA', 'C_HTB']
-display_df = X_sample_df[cols_to_show]
+display_df = X_sample_df[cols_to_show].copy()
 
 # 5. Dodaj rzeczywiste i przewidywane wyniki
 y_real = y_test[sample_idx]
 y_pred = y_test_pred[sample_idx]
 
-label_map = {0: 'Wygrana gościa', 1: 'Remis (D)', 2: 'Wygrana gospodarza (H)'}
+label_map = {0: 'Wygrana gospodarza (H)', 1: 'Remis (D)', 2: 'Wygrana gościa (A)'}
 display_df['Rzeczywista'] = [label_map[val] for val in y_real]
 display_df['Przewidywana'] = [label_map[val] for val in y_pred]
 
 # 6. Werdykt
 display_df['WERDYKT'] = ['✓ POPRAWNIE' if r == p else '✗ BŁĄD'
-                        for r, p in zip(y_real, y_pred)]
+                         for r, p in zip(y_real, y_pred)]
+
 
 # 7. Reset indeksu + numeracja
 display_df = display_df.reset_index(drop=True)
