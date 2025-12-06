@@ -9,9 +9,6 @@ import os
 import time
 import json
 from sklearn.model_selection import train_test_split
-from __classification_data import cv_auc_mean, cv_auc_std, training_time, best_params
-
-from exploratory_analysis.data_processing import X_scaled
 
 # 1. WCZYTANIE MODELU
 final_model = CatBoostClassifier()                    # pusty obiekt
@@ -23,17 +20,18 @@ X_test  = pd.read_csv("data/split/X_test.csv")
 #y_train = pd.read_csv("data/split/y_train.csv")["HomeNoLose"]   # as Series
 y_test  = pd.read_csv("data/split/y_test.csv") ["HomeNoLose"]   # as Series
 
-X_scaled = pd.read_csv("data/split/X_scaled.csv")
+X_scaled = pd.read_csv("data/X_scaled.csv")
 
 with open("results/binary_results.json", "r") as f:
     binary_results = json.load(f)
 
 cv_auc_mean = binary_results["cv_auc_mean"]
-training_time_sec = binary_results["training_time_sec"]
+training_time = binary_results["training_time_sec"]
 best_params = binary_results["best_params"]
+cv_auc_std = binary_results["cv_auc_std"]
 
 print(cv_auc_mean)
-print(training_time_sec)
+print(training_time)
 print(best_params)
 
 
@@ -93,7 +91,7 @@ os.makedirs("results", exist_ok=True)
 with open("results/binary_results.json", "w", encoding="utf-8") as f:
     json.dump(results, f, indent=2, ensure_ascii=False)
 
-print("\nWyniki zapisane → results/binary_results.json")
+print("\nWyniki zapisane → results/testing_results.json")
 
 # === 11. 15 PRZYKŁADOWYCH MECZÓW Z PROBABILISTYKAMI ===
 print("\n" + "="*130)

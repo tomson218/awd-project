@@ -1,10 +1,8 @@
-# __classification_binary.py – FINALNA WERSJA BINARNA (HomeNoLose vs AwayWin)
 from sklearn.metrics import accuracy_score, f1_score, classification_report, confusion_matrix, roc_auc_score
 from catboost import CatBoostClassifier, Pool
 import pandas as pd
 import numpy as np
 import seaborn as sns
-import matplotlib.pyplot as plt
 import os
 import time
 import json
