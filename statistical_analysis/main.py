@@ -13,7 +13,7 @@ print ("Matches data before clearing:", matches_before_clearing.head())
 print("Czy są już czyste: ", matches_before_clearing.isnull().sum())
 
 
-print ("Data cleared successfully.", matches_after_cleaning.head())
+print ("Data cleared successfully\n.", matches_after_cleaning.head())
 
 print("Czy są już czyste: ", matches_after_cleaning.isnull().sum())
 

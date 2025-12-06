@@ -4,6 +4,7 @@ import pandas as pd
 from scipy import stats
 from cleared_data import matches_after_cleaning
 from sklearn.linear_model import LinearRegression
+from matplotlib.patches import Patch
 
 def pie_chart():
     divisions = matches_after_cleaning['Division'].unique()
@@ -108,7 +109,7 @@ def bar_chart_cards_global():
     plt.grid(axis='y', linestyle='--', alpha=0.4)
 
     # Legenda
-    from matplotlib.patches import Patch
+
     legend_elements = [
         Patch(facecolor='#ffcc00', edgecolor='#cc9900', label='Żółta kartka'),
         Patch(facecolor='#ff3333', edgecolor='#cc0000', label='Czerwona kartka')
@@ -171,7 +172,7 @@ def time_series_plot():
 
 
 # --- 4. Histogram ---
-def histogram():
+def histogram_home():
     goals = matches_after_cleaning['FTHome'].dropna().astype(int)
 
     plt.figure(figsize=(11, 6))
@@ -184,6 +185,29 @@ def histogram():
     )
 
     plt.title("Histogram liczby goli strzelonych przez gospodarzy", fontsize=16, fontweight='bold', pad=15)
+    plt.xlabel("Liczba goli", fontsize=12)
+    plt.ylabel("Liczba meczów", fontsize=12)
+
+    plt.grid(axis='y', alpha=0.3, linestyle='--')
+    plt.xticks(range(0, goals.max() + 1))
+    plt.tight_layout()
+    plt.show()
+
+
+# --- 4. Histogram ---
+def histogram_away():
+    goals = matches_after_cleaning['FTAway'].dropna().astype(int)
+
+    plt.figure(figsize=(11, 6))
+    n, bins, patches = plt.hist(
+        goals,
+        bins=range(0, goals.max() + 2),  # zostaje
+        color='#2E86AB',
+        edgecolor='black',
+        alpha=0.8
+    )
+
+    plt.title("Histogram liczby goli strzelonych przez gościa", fontsize=16, fontweight='bold', pad=15)
     plt.xlabel("Liczba goli", fontsize=12)
     plt.ylabel("Liczba meczów", fontsize=12)
 
@@ -335,7 +359,8 @@ def visualizations_all():
     bar_chart()
     bar_chart_cards_global()
     time_series_plot()
-    histogram()
+    histogram_home()
+    histogram_away()
     box_plot()
     violin_plot()
     scatter_plot()

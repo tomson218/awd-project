@@ -58,6 +58,20 @@ def linear_regression():
     return a, b
 
 
+def correlation_matrix(matches_after_cleaning: pd.DataFrame) -> pd.DataFrame:
+    """
+    Oblicza i zwraca macierz korelacji Pearsona dla wszystkich
+    zmiennych numerycznych w DataFrame.
+    """
+    # 1. Wybierz tylko kolumny numeryczne
+    numeric_df = matches_after_cleaning.select_dtypes(include=np.number)
+
+    # 2. Oblicz macierz korelacji Pearsona
+    # Domyślna metoda w .corr() to 'pearson'
+    correlation_matrix = numeric_df.corr()
+
+    return correlation_matrix
+
 def descriptive_stats_all():
     print(calculate_values(matches_after_cleaning))
 
@@ -66,3 +80,7 @@ def descriptive_stats_all():
 
     a, b = linear_regression()
     print(f"Wzór regresji: Y = {a:.2f} * X + {b:.2f}")
+
+    matrix = correlation_matrix(matches_after_cleaning)
+    print("Macierz korelacji:\n")
+    print(matrix)

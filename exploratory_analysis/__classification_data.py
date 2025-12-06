@@ -1,5 +1,5 @@
-# __classification_data.py – FINALNA WERSJA
-from sklearn.metrics import accuracy_score, f1_score, classification_report, confusion_matrix
+# __classification_binary.py – FINALNA WERSJA BINARNA (HomeNoLose vs AwayWin)
+from sklearn.metrics import accuracy_score, f1_score, classification_report, confusion_matrix, roc_auc_score
 from catboost import CatBoostClassifier, Pool
 import pandas as pd
 import numpy as np
@@ -7,188 +7,148 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import os
 import time
-
-# === 1. WCZYTAJ DANE ===
-X_processed = pd.read_csv("data/X_processed.csv").values
-y_onehot = pd.read_csv("data/y_encoded.csv").values
-
-# KONWERSJA Z ONE-HOT NA LICZBY (0,1,2)
-y_encoded = np.argmax(y_onehot, axis=1)
-
-print(f"Kształt y po konwersji: {y_encoded.shape}")
-print(f"Unikalne klasy: {np.unique(y_encoded)}")
-print(f"Rozkład klas:\n{pd.Series(y_encoded).value_counts().sort_index()}")
-
-# === 2. PODZIAŁ 90/10 ===
+import json
 from sklearn.model_selection import train_test_split
+
+# === 1. WCZYTAJ PRZYGOTOWANE DANE BINARNE ===
+X_scaled = pd.read_csv("data/X_scaled.csv")           # już po MinMaxScaler
+y_binary = pd.read_csv("data/y_binary.csv")
+
+# Wybieramy naszą klasę: 1 = gospodarz nie przegra (H/D), 0 = goście wygrali
+y = y_binary["HomeNoLose"].values
+
+print(f"X shape: {X_scaled.shape}")
+print(f"Rozkład klas (HomeNoLose):")
+print(pd.Series(y).value_counts().sort_index())
+print(f"Procent meczów gdzie gospodarz nie przegrał: {y.mean():.2%}")
+
+X = X_scaled.values
+
+
+
 X_train, X_test, y_train, y_test = train_test_split(
-    X_processed, y_encoded, test_size=0.1, stratify=y_encoded, random_state=42
+    X, y, test_size=0.1, stratify=y, random_state=42
 )
 
-train_pool = Pool(X_train, y_train)
-test_pool = Pool(X_test, y_test)
+# <--- TUTAJ WKLEJ PONIŻSZY BLOK --->
 
-# === 3. GRID SEARCH (Twoja siatka – działa!) ===
+# === ZAPIS PODZIELONYCH ZBIORÓW DO CSV ===
+print("\nZapisywanie podzielonych danych do folderu data/split/...")
+os.makedirs("data/split", exist_ok=True)
+
+feature_names = X_scaled.columns.tolist()
+
+X_train_df = pd.DataFrame(X_train, columns=feature_names)
+X_test_df  = pd.DataFrame(X_test,  columns=feature_names)
+y_train_df = pd.DataFrame(y_train, columns=["HomeNoLose"])
+y_test_df  = pd.DataFrame(y_test,  columns=["HomeNoLose"])
+
+X_train_df.to_csv("data/split/X_train.csv", index=False)
+X_test_df.to_csv( "data/split/X_test.csv",  index=False)
+y_train_df.to_csv("data/split/y_train.csv", index=False)
+y_test_df.to_csv( "data/split/y_test.csv",  index=False)
+
+print("   → X_train.csv  :", X_train_df.shape)
+print("   → X_test.csv   :", X_test_df.shape)
+print("   → y_train.csv  :", y_train_df.shape)
+print("   → y_test.csv   :", y_test_df.shape)
+print("Zbiory zapisane!\n")
+
+train_pool = Pool(X_train, y_train)
+test_pool  = Pool(X_test, y_test)
+
+# === 3. GRID SEARCH – zoptymalizowany pod klasyfikację binarną ===
 param_grid = {
-    'iterations': [5, 10, 20, 50, 100, 200, 500, 1000, 1500],
-    'depth': [6, 7, 8, 9, 10],
-    'learning_rate': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7],
-    'class_weights': [None, [1.0, 1.8, 1.1]]
+    'iterations': [300, 500, 800, 1200],
+    'depth': [5, 6, 7, 8],
+    'learning_rate': [0.03, 0.05, 0.08, 0.1],
+    'l2_leaf_reg': [1, 3, 5, 7],
+    'border_count': [128, 254],
+    #'scale_pos_weight': [1.0, 1.5, 2.0]   # ważenie klasy mniejszościowej (AwayWin)
 }
 
 model = CatBoostClassifier(
-    loss_function="MultiClass",
-    eval_metric="Accuracy",
+    loss_function='Logloss',
+    eval_metric='AUC',           # kluczowa metryka w zakładach!
     random_seed=42,
     thread_count=-1,
-    verbose=False
+    verbose=False,
+    early_stopping_rounds=100
 )
 
-print("Grid Search...")
-grid_result = model.grid_search(param_grid, X=train_pool, cv=5, plot=True, verbose=1)
+print("\nGrid Search w toku (może potrwać 2-10 min)...")
+grid_result = model.grid_search(param_grid, train_pool, cv=5, plot=False, verbose=1)
 
-# === 4. ŚREDNIA I ODCHYLENIE (2025 fix!) ===
-cv_results = grid_result["cv_results"]
-best_idx = np.argmax(cv_results["test-Accuracy-mean"])
-cv_mean = cv_results["test-Accuracy-mean"][best_idx]
-cv_std = cv_results["test-Accuracy-std"][best_idx]
+# === 4. NAJLEPSZE PARAMETRY Z CV ===
+best_params = grid_result["params"]
+cv_auc_mean = max(grid_result["cv_results"]["test-AUC-mean"])
+cv_auc_std  = grid_result["cv_results"]["test-AUC-std"][np.argmax(grid_result["cv_results"]["test-AUC-mean"])]
 
-print(f"\n5-fold CV – Accuracy: {cv_mean:.4f} ± {cv_std:.4f}")
+print(f"\n5-fold CV – AUC: {cv_auc_mean:.4f} ± {cv_auc_std:.4f}")
 
 # === 5. FINALNY MODEL ===
-best_params = grid_result["params"]
-final_model = CatBoostClassifier(**best_params, loss_function="MultiClass", random_seed=42)
+final_model = CatBoostClassifier(**best_params,
+                                 loss_function='Logloss',
+                                 eval_metric='AUC',
+                                 random_seed=42,
+                                 thread_count=-1,
+                                 verbose=200)
+
+print("\nTrenowanie finalnego modelu...")
 start_time = time.time()
-final_model.fit(train_pool, verbose=200,  eval_set=test_pool,plot=True)
-end_time = time.time()
-training_time = end_time - start_time
-print(f"Czas uczenia modelu: {training_time:.2f} s")
+final_model.fit(train_pool, eval_set=test_pool, plot=False)
+training_time = time.time() - start_time
+print(f"Czas uczenia: {training_time:.2f} s")
 
-print(f"Czas uczenia modelu: {training_time:.2f} s")
-
-# Pobranie historii metryk
-evals_result = final_model.get_evals_result()
-train_loss = evals_result['learn']['MultiClass']
-val_loss = evals_result['validation']['MultiClass']
-
-# Wykres
-plt.figure(figsize=(8,5))
-plt.plot(train_loss, label='Train MultiClass Loss')
-plt.plot(val_loss, label='Validation MultiClass Loss')
-plt.xlabel('Iteracja')
-plt.ylabel('MultiClass Loss')
-plt.title('Uczenie i walidacja – MultiClass Loss')
-plt.legend()
-plt.grid(True)
-plt.tight_layout()
-plt.show()
-
-# === 6. ZAPIS MODELU ===
+# === 6. ZAPIS MODELU I SCALERA ===
 os.makedirs("models", exist_ok=True)
-final_model.save_model("models/catboost_final.cbm")
-print("Model zapisany!")
+final_model.save_model("models/catboost_home_no_lose.cbm")
+print("Model zapisany → models/catboost_home_no_lose.cbm")
 
-# === 7. TESTOWANIE ===
-print("\nTestowanie na zbiorze testowym...")
-y_test_pred = final_model.predict(X_test).flatten()
 
-# y_test to liczby – ale na wszelki wypadek:
-y_test_flat = y_test  # już jest liczbą
+# === 7. ZAPIS WYNIKÓW FINALNYCH DO JSON ===
+os.makedirs("results", exist_ok=True)
 
-test_accuracy = accuracy_score(y_test_flat, y_test_pred)
-test_f1 = f1_score(y_test_flat, y_test_pred, average='weighted')
-
-print(f"Accuracy (test): {test_accuracy:.4f}")
-print(f"F1-score: {test_f1:.4f}")
-
-# === 8. MACIERZ I RAPORT ===
-print("\nClassification Report:")
-print(classification_report(y_test_flat, y_test_pred,
-                          target_names=['Wygrana gospodarza (H)', 'Remis (D)', 'Wygrana gościa (A)']))
-
-plt.figure(figsize=(7, 5.5))
-sns.heatmap(confusion_matrix(y_test_flat, y_test_pred), annot=True, fmt='d', cmap='Blues',
-            xticklabels=['H', 'D', 'A'], yticklabels=['H', 'D', 'A'])
-plt.ylabel('Rzeczywiste')
-plt.xlabel('Przewidywane')
-plt.title(f'Macierz pomyłek – Accuracy: {test_accuracy:.4f}')
-plt.tight_layout()
-plt.show()
-
-# === 9. WAŻNOŚĆ CECH ===
-print("\nTop najważniejszych cech:")
-feature_importance = final_model.get_feature_importance()
-numeric_cols = pd.read_csv("data/X_processed.csv").columns.tolist()
-
-fi_df = pd.DataFrame({
-    'Cecha': numeric_cols,
-    'Ważność (%)': feature_importance
-}).sort_values(by='Ważność (%)', ascending=False)
-
-print(fi_df.head(10))
-
-plt.figure(figsize=(10, 6))
-top10 = fi_df.head(10)
-sns.barplot(data=top10, x='Ważność (%)', y='Cecha', palette='viridis')
-plt.title("Najważniejsze cechy")
-plt.tight_layout()
-plt.show()
-
-# === 10. ZAPIS WYNIKÓW ===
-results = {
-    "cv_accuracy": float(cv_mean),
-    "cv_std": float(cv_std),
-    "test_accuracy": test_accuracy,
-    "test_f1": test_f1,
+final_results = {
+    "cv_auc_mean": cv_auc_mean,
+    "cv_auc_std": cv_auc_std,
+    "training_time_sec": training_time,
     "best_params": best_params
 }
 
-import json   # ← DODAJ TO!
+with open("results/binary_results.json", "w") as f:
+    json.dump(final_results, f, indent=4)
 
-os.makedirs("results", exist_ok=True)
-with open("results/final_results.json", "w", encoding="utf-8") as f:
-    json.dump(results, f, indent=2, ensure_ascii=False)
-
-print("\nWyniki zapisane: results/final_results.json")
+print("Wyniki zapisane → results/binary_results.json")
 
 
 
-# === 10 PRZYKŁADOWYCH MECZÓW – JAK CHCIAŁEŚ ===
-print("\n" + "="*120)
-print("10 PRZYKŁADOWYCH MECZÓW – RZECZYWISTE vs PRZEWIDYWANE")
-print("="*120)
-
-# 1. Weź 10 losowych rekordów z testowego
-np.random.seed(42)
-sample_idx = np.random.choice(len(X_test), size=30, replace=False)
-
-# 2. Przywróć nazwy kolumn (z oryginalnego X_processed.csv)
-feature_names = pd.read_csv("data/X_processed.csv").columns.tolist()
-
-# 3. DataFrame z wybranymi cechami
-X_sample_df = pd.DataFrame(X_test[sample_idx], columns=feature_names)
-
-# 4. Wybierz tylko kolumny, które chcesz pokazać
-cols_to_show = ['HomeElo', 'AwayElo', 'HomeTarget', 'AwayTarget', 'C_LTA', 'C_HTB']
-display_df = X_sample_df[cols_to_show].copy()
-
-# 5. Dodaj rzeczywiste i przewidywane wyniki
-y_real = y_test[sample_idx]
-y_pred = y_test_pred[sample_idx]
-
-label_map = {0: 'Wygrana gospodarza (H)', 1: 'Remis (D)', 2: 'Wygrana gościa (A)'}
-display_df['Rzeczywista'] = [label_map[val] for val in y_real]
-display_df['Przewidywana'] = [label_map[val] for val in y_pred]
-
-# 6. Werdykt
-display_df['WERDYKT'] = ['✓ POPRAWNIE' if r == p else '✗ BŁĄD'
-                         for r, p in zip(y_real, y_pred)]
 
 
-# 7. Reset indeksu + numeracja
-display_df = display_df.reset_index(drop=True)
-display_df.index = display_df.index + 1
-display_df = display_df.rename_axis('Nr')
-
-# 8. Pokaż tabelkę
-print(display_df.to_string())
+"""
+         Cecha  Ważność (%)
+9      MaxHome    14.391368
+11     MaxAway    10.295922
+8      OddAway     9.472144
+16   HandiSize     6.756662
+10     MaxDraw     6.469593
+19       C_LTH     5.787165
+0        C_LTA     5.228240
+20       C_VHD     4.621096
+23       C_HTB     3.397281
+7      OddDraw     3.378007
+22       C_PHB     2.984806
+5    Form3Away     2.978149
+1      HomeElo     2.679316
+18   HandiAway     2.427039
+13     Under25     2.394047
+2      AwayElo     2.321979
+15  MaxUnder25     2.203340
+6    Form5Away     2.186233
+21       C_VAD     2.020846
+12      Over25     1.853391
+17   HandiHome     1.668873
+14   MaxOver25     1.635140
+3    Form3Home     1.547789
+4    Form5Home     1.301575
+"""
