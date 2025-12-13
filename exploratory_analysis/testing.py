@@ -14,10 +14,8 @@ from sklearn.model_selection import train_test_split
 final_model = CatBoostClassifier()                    # pusty obiekt
 final_model.load_model("models/catboost_home_no_lose.cbm")   # ← tu podajesz swoją ścieżkę
 
-# Load the split you just saved
-#X_train = pd.read_csv("data/split/X_train.csv")
+
 X_test  = pd.read_csv("data/split/X_test.csv")
-#y_train = pd.read_csv("data/split/y_train.csv")["HomeNoLose"]   # as Series
 y_test  = pd.read_csv("data/split/y_test.csv") ["HomeNoLose"]   # as Series
 
 X_scaled = pd.read_csv("data/X_scaled.csv")
@@ -35,8 +33,6 @@ print(training_time)
 print(best_params)
 
 
-
-# === 7. PREDYKCJE I METRYKI ===
 y_pred_proba = final_model.predict_proba(X_test)[:, 1]
 y_pred = (y_pred_proba >= 0.5).astype(int)
 
@@ -49,19 +45,19 @@ print(f"Accuracy : {acc:.4f}")
 print(f"F1-score : {f1:.4f}")
 print(f"ROC AUC  : {auc:.4f}")
 
-# === 8. MACIERZ POMYŁEK ===
 plt.figure(figsize=(6, 5))
 cm = confusion_matrix(y_test, y_pred)
+
 sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
             xticklabels=['Goście wygrali (A)', 'Gospodarz nie przegrał (H/D)'],
             yticklabels=['Goście wygrali (A)', 'Gospodarz nie przegrał (H/D)'])
+
 plt.ylabel('Rzeczywiste')
 plt.xlabel('Przewidywane')
 plt.title(f'Macierz pomyłek – AUC: {auc:.4f}')
 plt.tight_layout()
 plt.show()
 
-# === 9. WAŻNOŚĆ CECH ===
 feature_names = X_scaled.columns.tolist()
 fi = final_model.get_feature_importance(type='PredictionValuesChange')
 fi_df = pd.DataFrame({'Cecha': feature_names, 'Ważność (%)': fi}).sort_values(by='Ważność (%)', ascending=False)
@@ -75,7 +71,6 @@ plt.title("Najważniejsze cechy – CatBoost")
 plt.tight_layout()
 plt.show()
 
-# === 10. ZAPIS WYNIKÓW ===
 results = {
     "task": "HomeNoLose vs AwayWin",
     "cv_auc_mean": float(cv_auc_mean),
@@ -93,7 +88,6 @@ with open("results/binary_results.json", "w", encoding="utf-8") as f:
 
 print("\nWyniki zapisane → results/testing_results.json")
 
-# === 11. 15 PRZYKŁADOWYCH MECZÓW Z PROBABILISTYKAMI ===
 print("\n" + "="*130)
 print("15 LOSOWYCH MECZÓW Z TESTU – RZECZYWISTE vs PRZEWIDYWANE + PRAWDOPODOBIEŃSTWO")
 print("="*130)
@@ -117,4 +111,13 @@ display_df = display_df.reset_index(drop=True)
 display_df.index += 1
 display_df = display_df.rename_axis('Nr')
 
-print(display_df.to_string(float_format="{:.4f}".format))
+print(display_df.to_string(float_format="{:.2f}".format))
+
+# === ZAPIS DO CSV – poprawnie! ===
+os.makedirs("results", exist_ok=True)
+csv_path = "results/15_przykladowych_meczow_test.csv"
+
+# Poprawna metoda: to_csv, nie to_excel!
+display_df.to_csv(csv_path, index=True, encoding='utf-8-sig')
+
+print(f"\n15 przykładów zapisano do pliku CSV → {csv_path}")

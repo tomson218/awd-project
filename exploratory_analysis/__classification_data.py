@@ -22,13 +22,18 @@ print(f"Procent meczów gdzie gospodarz nie przegrał: {y.mean():.2%}")
 
 X = X_scaled.values
 
+# --- NOWY PODZIAŁ NA TRZY ZBIORY: TRAIN (80%), VALIDATION (10%), TEST (10%) ---
 
-
-X_train, X_test, y_train, y_test = train_test_split(
+# Krok 1: Podział na 90% (tymczasowy) i 10% (testowy)
+X_temp, X_test, y_temp, y_test = train_test_split(
     X, y, test_size=0.1, stratify=y, random_state=42
 )
 
-# <--- TUTAJ WKLEJ PONIŻSZY BLOK --->
+# Krok 2: Podział tymczasowego zbioru (90%) na 80% (treningowy) i 10% (walidacyjny)
+# (1/9 z 90% to 10%)
+X_train, X_val, y_train, y_val = train_test_split(
+    X_temp, y_temp, test_size=1/9, stratify=y_temp, random_state=42
+)
 
 # === ZAPIS PODZIELONYCH ZBIORÓW DO CSV ===
 print("\nZapisywanie podzielonych danych do folderu data/split/...")
@@ -36,24 +41,34 @@ os.makedirs("data/split", exist_ok=True)
 
 feature_names = X_scaled.columns.tolist()
 
+# Tworzenie DataFrames dla Walidacji
 X_train_df = pd.DataFrame(X_train, columns=feature_names)
+X_val_df   = pd.DataFrame(X_val,   columns=feature_names)
 X_test_df  = pd.DataFrame(X_test,  columns=feature_names)
 y_train_df = pd.DataFrame(y_train, columns=["HomeNoLose"])
+y_val_df   = pd.DataFrame(y_val,   columns=["HomeNoLose"])
 y_test_df  = pd.DataFrame(y_test,  columns=["HomeNoLose"])
 
+# Zapis do CSV
 X_train_df.to_csv("data/split/X_train.csv", index=False)
+X_val_df.to_csv(  "data/split/X_val.csv",   index=False)
 X_test_df.to_csv( "data/split/X_test.csv",  index=False)
 y_train_df.to_csv("data/split/y_train.csv", index=False)
+y_val_df.to_csv(  "data/split/y_val.csv",   index=False)
 y_test_df.to_csv( "data/split/y_test.csv",  index=False)
 
 print("   → X_train.csv  :", X_train_df.shape)
+print("   → X_val.csv    :", X_val_df.shape)
 print("   → X_test.csv   :", X_test_df.shape)
 print("   → y_train.csv  :", y_train_df.shape)
+print("   → y_val.csv    :", y_val_df.shape)
 print("   → y_test.csv   :", y_test_df.shape)
 print("Zbiory zapisane!\n")
 
 train_pool = Pool(X_train, y_train)
+val_pool   = Pool(X_val, y_val)
 test_pool  = Pool(X_test, y_test)
+
 
 # === 3. GRID SEARCH – zoptymalizowany pod klasyfikację binarną ===
 param_grid = {
@@ -94,7 +109,7 @@ final_model = CatBoostClassifier(**best_params,
 
 print("\nTrenowanie finalnego modelu...")
 start_time = time.time()
-final_model.fit(train_pool, eval_set=test_pool, plot=False)
+final_model.fit(train_pool, eval_set=val_pool, plot=False)
 training_time = time.time() - start_time
 print(f"Czas uczenia: {training_time:.2f} s")
 
