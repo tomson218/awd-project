@@ -9,6 +9,7 @@ import os
 import time
 import json
 from sklearn.model_selection import train_test_split
+from data_processing import numeric_cols
 
 # 1. WCZYTANIE MODELU
 final_model = CatBoostClassifier()                    # pusty obiekt
@@ -105,10 +106,7 @@ np.random.seed(42)
 idx = np.random.choice(len(X_test), size=15, replace=False)
 
 display_df = X_scaled.iloc[idx].copy()
-display_df = display_df[['C_LTA', 'HomeElo', 'AwayElo', 'Form3Home', 'Form5Home', 'Form3Away', 'Form5Away', 'OddDraw', 'OddAway', 'MaxHome', 'MaxDraw', 'MaxAway', 'Over25',
-                'Under25', 'MaxOver25', 'MaxUnder25', 'HandiSize', 'HandiHome', 'HandiAway', 'C_LTH', 'C_VHD', 'C_VAD', 'C_PHB',
-
-                                                                                                                                               'C_HTB']]
+display_df = display_df[numeric_cols]
 
 display_df['P(HomeNoLose)'] = y_pred_proba[idx].round(4)
 display_df['Przewidywana'] = ['HomeNoLose' if p >= 0.5 else 'AwayWin' for p in y_pred_proba[idx]]
