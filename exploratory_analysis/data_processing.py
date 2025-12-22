@@ -11,8 +11,11 @@ df = pd.read_csv('../csv/Exploratory_matches_cleaned.csv')
                 'Under25', 'MaxOver25', 'MaxUnder25', 'HandiSize', 'HandiHome', 'HandiAway', 'C_LTH', 'C_VHD', 'C_VAD', 'C_PHB', 'C_HTB']
                 """
 
-numeric_cols = ["OddHome", "MaxDraw", "MaxAway", "OddDraw", "Form5Away", "MaxHome", "MaxUnder25", "HandiSize",
-                "Form5Home", "OddAway", "Under25", "C_LTH", "HomeElo", "C_VHD", "AwayElo", "C_LTA"]
+"""numeric_cols = ["OddHome", "MaxDraw", "MaxAway", "OddDraw", "Form5Away", "MaxHome", "MaxUnder25", "HandiSize",
+                "Form5Home", "OddAway", "Under25", "C_LTH", "HomeElo", "C_VHD", "AwayElo", "C_LTA"]"""
+
+numeric_cols = ["MaxHome", "OddHome", "OddAway", "MaxDraw",
+                "OddDraw", "HomeElo", "C_LTH", "Form5Home"]
 
 
 X = df[numeric_cols].copy()
