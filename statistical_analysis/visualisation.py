@@ -230,6 +230,10 @@ def box_plot():
         'N1': 'Eredivisie'
     }
 
+    print("Statystyki wskaźnika Elo dla poszczególnych lig:\n")
+    print(f"{'Liga':<12} {'Mediana':<10} {'Q1':<10} {'Q3':<10} {'Min':<10} {'Max':<10} {'IQR':<10}")
+    print("-" * 70)
+
     for div in divisions:
         df_div = matches_after_cleaning[matches_after_cleaning['Division'] == div]
         
@@ -241,10 +245,12 @@ def box_plot():
     plt.boxplot(all_elo_ratings_data, patch_artist=True,
                 boxprops=dict(facecolor='lightblue'), medianprops=dict(color='blue'))
 
-    plt.xticks(range(1, len(divisions) + 1), divisions, rotation=45)
+    labels = [league_names.get(div, div) for div in divisions]
+    plt.xticks(range(1, len(divisions) + 1), labels, rotation=45)
+
     plt.xlabel("Liga")
     plt.ylabel("Wskaźnik Elo")
-    plt.title("Rozkład dla wskaznika Elo wg poszczególnych lig")
+    plt.title("Wykres pudełkowy dla wskaznika Elo wg poszczególnych lig")
     plt.show()
 
 # --- 6. Wykres wiolinowy ---
@@ -306,7 +312,7 @@ def violin_plot():
     plt.xticks(range(1, len(labels) + 1), labels, rotation=45, ha='right', fontsize=11)
     plt.xlabel("Liga", fontsize=13)
     plt.ylabel("Liczba fauli w meczu", fontsize=13)
-    plt.title("Rozkład fauli dla drużyn pogrupowane według poszczególnych lig",
+    plt.title("Wykres wiolinowy dla fauli dla drużyn pogrupowane według poszczególnych lig",
               fontsize=15, pad=20, fontweight='bold')
 
     plt.grid(axis='y', alpha=0.3, linestyle='--')

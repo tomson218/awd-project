@@ -86,9 +86,9 @@ def descriptive_stats_all():
     print(matrix)
 
     # Zapis macierzy korelacji do Excela
-    output_path = "./macierz_korelacji.xlsx"
+    output_path = "./macierz_korelacji.csv"
 
     # Użyj pandas do zapisu – automatycznie ładnie sformatuje
-    matrix.to_excel(output_path, sheet_name='Korelacje', float_format="%.4f")
+    matrix.to_csv(output_path, float_format="%.4f")
 
     print(f"Macierz korelacji zapisana do pliku Excel: {output_path}")

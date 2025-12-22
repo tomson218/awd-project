@@ -90,35 +90,63 @@ model = CatBoostClassifier(
 )
 
 print("\nGrid Search w toku (może potrwać 2-10 min)...")
-grid_result = model.grid_search(param_grid, train_pool, cv=5, plot=False, verbose=1)
+#grid_result = model.grid_search(param_grid, train_pool, cv=5, plot=False, verbose=1)
 
 # === 4. NAJLEPSZE PARAMETRY Z CV ===
-best_params = grid_result["params"]
-cv_auc_mean = max(grid_result["cv_results"]["test-AUC-mean"])
-cv_auc_std  = grid_result["cv_results"]["test-AUC-std"][np.argmax(grid_result["cv_results"]["test-AUC-mean"])]
+#best_params = grid_result["params"]
+#cv_auc_mean = max(grid_result["cv_results"]["test-AUC-mean"])
+#cv_auc_std  = grid_result["cv_results"]["test-AUC-std"][np.argmax(grid_result["cv_results"]["test-AUC-mean"])]
 
-print(f"\n5-fold CV – AUC: {cv_auc_mean:.4f} ± {cv_auc_std:.4f}")
+#print(f"\n5-fold CV – AUC: {cv_auc_mean:.4f} ± {cv_auc_std:.4f}")
 
 
 # 1. Pobieramy wyniki wszystkich kombinacji
-cv_results = grid_result["cv_results"]
-params_list = grid_result["params"] # Lista parametrów dla każdego kroku (jeśli dostępna) lub parametry z siatki
+#cv_results = grid_result["cv_results"]
+#params_list = grid_result["params"] # Lista parametrów dla każdego kroku (jeśli dostępna) lub parametry z siatki
 
 # CatBoost przechowuje wyniki metryk w listach pod kluczami np. 'test-AUC-mean'
 # Tworzymy DataFrame z wyników metryk
-df_metrics = pd.DataFrame(cv_results)
+#df_metrics = pd.DataFrame(cv_results)
 
 # 2. Dodajemy informacje o parametrach (jeśli grid_search ich nie dołączył automatycznie do cv_results)
 # Uwaga: W CatBoost grid_result['cv_results'] często zawiera historię iteracji dla konkretnych prób.
 # Aby uzyskać tabelę wszystkich kombinacji, najlepiej użyć poniższego podejścia:
 
-results_df = pd.DataFrame(grid_result['params'], index=[0]) # Jeśli to pojedynczy wynik
+#results_df = pd.DataFrame(grid_result['params'], index=[0]) # Jeśli to pojedynczy wynik
 # Jeśli chcesz pełną historię wszystkich sprawdzonych kombinacji:
-full_results = pd.DataFrame(grid_result.get('all_params', [])) # Zależy od wersji CatBoost
+#full_results = pd.DataFrame(grid_result.get('all_params', [])) # Zależy od wersji CatBoost
 
+
+"""
+
+"best_params": {
+        "border_count": 128,
+        "depth": 6,
+        "learning_rate": 0.08,
+        "l2_leaf_reg": 1,
+        "iterations": 10
+    },
+
+"""
+
+#      'depth': [5, 6, 7, 8],
 
 # === 5. FINALNY MODEL ===
-final_model = CatBoostClassifier(**best_params,
+final_model = CatBoostClassifier(
+        iterations=10,
+        l2_leaf_reg=1,
+    learning_rate=0.08,
+    depth=6,
+
+        border_count=512,
+
+
+
+
+
+
+    #'iterations': [10, 20, 50, 100, 200, 300, 500, 600, 1200],
+
                                  loss_function='Logloss',
                                  custom_metric=['AUC', 'Accuracy', 'Precision', 'Recall'],
                                  # Dodatkowe metryki do monitorowania,
@@ -167,10 +195,10 @@ val_recall = history['validation']['Recall'][-1]
 val_logloss = history['validation']['Logloss'][-1]
 
 final_results = {
-    "cv_auc_mean": cv_auc_mean,
-    "cv_auc_std": cv_auc_std,
+   # "cv_auc_mean": cv_auc_mean,
+    #"cv_auc_std": cv_auc_std,
     "training_time_sec": training_time,
-    "best_params": best_params,
+    #"best_params": best_params,
 "final_validation_metrics": {
         "AUC": float(val_auc),
         "Accuracy": float(val_accuracy),
