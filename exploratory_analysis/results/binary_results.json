@@ -1,16 +1,16 @@
 {
   "task": "HomeNoLose vs AwayWin",
-  "cv_auc_mean": 0.7473963904584418,
-  "cv_auc_std": 0.010913933233100947,
-  "test_accuracy": 0.7475538160469667,
-  "test_f1": 0.8326848249027238,
-  "test_auc": 0.7675260874242479,
-  "training_time_sec": 1.700561285018921,
+  "cv_auc_mean": 0.7443518901754066,
+  "cv_auc_std": 0.011105176745523979,
+  "test_accuracy": 0.7495107632093934,
+  "test_f1": 0.834625322997416,
+  "test_auc": 0.7607666654713666,
+  "training_time_sec": 4.761939287185669,
   "best_params": {
     "border_count": 254,
-    "depth": 5,
-    "learning_rate": 0.1,
-    "l2_leaf_reg": 5,
+    "depth": 8,
+    "learning_rate": 0.08,
+    "l2_leaf_reg": 1,
     "iterations": 300
   }
 }

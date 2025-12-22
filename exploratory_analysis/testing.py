@@ -1,5 +1,5 @@
 # __classification_binary.py – FINALNA WERSJA BINARNA (HomeNoLose vs AwayWin)
-from sklearn.metrics import accuracy_score, f1_score, classification_report, confusion_matrix, roc_auc_score
+from sklearn.metrics import accuracy_score, f1_score, classification_report, confusion_matrix, roc_auc_score, log_loss
 from catboost import CatBoostClassifier, Pool
 import pandas as pd
 import numpy as np
@@ -39,11 +39,13 @@ y_pred = (y_pred_proba >= 0.5).astype(int)
 acc  = accuracy_score(y_test, y_pred)
 f1   = f1_score(y_test, y_pred)
 auc  = roc_auc_score(y_test, y_pred_proba)
+logloss_val = log_loss(y_test, y_pred_proba)
 
 print(f"\n=== WYNIKI NA ZBIORZE TESTOWYM ===")
 print(f"Accuracy : {acc:.4f}")
 print(f"F1-score : {f1:.4f}")
 print(f"ROC AUC  : {auc:.4f}")
+print(f"LogLoss   : {logloss_val:.4f}")
 
 plt.figure(figsize=(6, 5))
 cm = confusion_matrix(y_test, y_pred)

@@ -74,7 +74,7 @@ test_pool  = Pool(X_test, y_test)
 param_grid = {
     'iterations': [300, 500, 800, 1200],
     'depth': [5, 6, 7, 8],
-    'learning_rate': [0.03, 0.05, 0.08, 0.1],
+    'learning_rate': [0.005, 0.01, 0.02, 0.03, 0.05, 0.08, 0.1],
     'l2_leaf_reg': [1, 3, 5, 7],
     'border_count': [128, 254],
     #'scale_pos_weight': [1.0, 1.5, 2.0]   # ważenie klasy mniejszościowej (AwayWin)
@@ -98,6 +98,24 @@ cv_auc_mean = max(grid_result["cv_results"]["test-AUC-mean"])
 cv_auc_std  = grid_result["cv_results"]["test-AUC-std"][np.argmax(grid_result["cv_results"]["test-AUC-mean"])]
 
 print(f"\n5-fold CV – AUC: {cv_auc_mean:.4f} ± {cv_auc_std:.4f}")
+
+
+# 1. Pobieramy wyniki wszystkich kombinacji
+cv_results = grid_result["cv_results"]
+params_list = grid_result["params"] # Lista parametrów dla każdego kroku (jeśli dostępna) lub parametry z siatki
+
+# CatBoost przechowuje wyniki metryk w listach pod kluczami np. 'test-AUC-mean'
+# Tworzymy DataFrame z wyników metryk
+df_metrics = pd.DataFrame(cv_results)
+
+# 2. Dodajemy informacje o parametrach (jeśli grid_search ich nie dołączył automatycznie do cv_results)
+# Uwaga: W CatBoost grid_result['cv_results'] często zawiera historię iteracji dla konkretnych prób.
+# Aby uzyskać tabelę wszystkich kombinacji, najlepiej użyć poniższego podejścia:
+
+results_df = pd.DataFrame(grid_result['params'], index=[0]) # Jeśli to pojedynczy wynik
+# Jeśli chcesz pełną historię wszystkich sprawdzonych kombinacji:
+full_results = pd.DataFrame(grid_result.get('all_params', [])) # Zależy od wersji CatBoost
+
 
 # === 5. FINALNY MODEL ===
 final_model = CatBoostClassifier(**best_params,

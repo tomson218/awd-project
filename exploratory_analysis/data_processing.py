@@ -7,10 +7,8 @@ import joblib
 df = pd.read_csv('../csv/Matches_cleaned.csv')
 
 # --- NUMERYCZNE CECHY ---
-numeric_cols = ['C_LTA', 'HomeElo', 'AwayElo', 'Form3Home', 'Form5Home', 'Form3Away', 'Form5Away', 'OddDraw', 'OddAway', 'MaxHome', 'MaxDraw', 'MaxAway', 'Over25',
-                'Under25', 'MaxOver25', 'MaxUnder25', 'HandiSize', 'HandiHome', 'HandiAway', 'C_LTH', 'C_VHD', 'C_VAD', 'C_PHB',
-                
-                                                                                                                                               'C_HTB']
+numeric_cols = ['C_LTA', 'HomeElo', 'AwayElo', 'Form3Home', 'Form5Home', 'Form3Away', 'Form5Away', 'OddDraw', 'OddAway', 'OddHome', 'MaxHome', 'MaxDraw', 'MaxAway', 'Over25',
+                'Under25', 'MaxOver25', 'MaxUnder25', 'HandiSize', 'HandiHome', 'HandiAway', 'C_LTH', 'C_VHD', 'C_VAD', 'C_PHB', 'C_HTB']
 
 X = df[numeric_cols].copy()
 y = df['FTResult'].copy()
