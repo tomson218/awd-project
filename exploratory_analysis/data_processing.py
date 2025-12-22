@@ -4,7 +4,7 @@ import os
 import joblib
 
 # Wczytaj dane
-df = pd.read_csv('../csv/Matches_cleaned.csv')
+df = pd.read_csv('../csv/Exploratory_matches_cleaned.csv')
 
 # --- NUMERYCZNE CECHY ---
 numeric_cols = ['C_LTA', 'HomeElo', 'AwayElo', 'Form3Home', 'Form5Home', 'Form3Away', 'Form5Away', 'OddDraw', 'OddAway', 'OddHome', 'MaxHome', 'MaxDraw', 'MaxAway', 'Over25',

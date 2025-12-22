@@ -28,6 +28,17 @@ training_time = binary_results["training_time_sec"]
 best_params = binary_results["best_params"]
 cv_auc_std = binary_results["cv_auc_std"]
 
+val_auc = binary_results["final_validation_metrics"]["AUC"]
+val_accuracy = binary_results["final_validation_metrics"]["Accuracy"]
+val_precision = binary_results["final_validation_metrics"]["Precision"]
+val_recall = binary_results["final_validation_metrics"]["Recall"]
+val_logloss = binary_results["final_validation_metrics"]["Logloss"]
+
+
+
+# Wyciągamy ostatnie (finalne) wartości ze zbioru walidacyjnego
+
+
 print(cv_auc_mean)
 print(training_time)
 print(best_params)
@@ -60,18 +71,7 @@ plt.title(f'Macierz pomyłek – AUC: {auc:.4f}')
 plt.tight_layout()
 plt.show()
 
-feature_names = X_scaled.columns.tolist()
-fi = final_model.get_feature_importance(type='PredictionValuesChange')
-fi_df = pd.DataFrame({'Cecha': feature_names, 'Ważność (%)': fi}).sort_values(by='Ważność (%)', ascending=False)
 
-print("\nTop 10 najważniejszych cech:")
-print(fi_df.head(30))
-
-plt.figure(figsize=(10, 6))
-sns.barplot(data=fi_df.head(10), x='Ważność (%)', y='Cecha', palette='viridis')
-plt.title("Najważniejsze cechy – CatBoost")
-plt.tight_layout()
-plt.show()
 
 results = {
     "task": "HomeNoLose vs AwayWin",
@@ -81,7 +81,14 @@ results = {
     "test_f1": float(f1),
     "test_auc": float(auc),
     "training_time_sec": float(training_time),
-    "best_params": best_params
+    "best_params": best_params,
+    "final_validation_metrics": {
+        "AUC": float(val_auc),
+        "Accuracy": float(val_accuracy),
+        "Precision": float(val_precision),
+        "Recall": float(val_recall),
+        "Logloss": float(val_logloss)
+    }
 }
 
 os.makedirs("results", exist_ok=True)

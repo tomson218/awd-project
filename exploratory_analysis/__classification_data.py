@@ -1,12 +1,12 @@
-from sklearn.metrics import accuracy_score, f1_score, classification_report, confusion_matrix, roc_auc_score
 from catboost import CatBoostClassifier, Pool
 import pandas as pd
 import numpy as np
-import seaborn as sns
 import os
 import time
 import json
 from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # === 1. WCZYTAJ PRZYGOTOWANE DANE BINARNE ===
 X_scaled = pd.read_csv("data/X_scaled.csv")           # już po MinMaxScaler
@@ -72,7 +72,7 @@ test_pool  = Pool(X_test, y_test)
 
 # === 3. GRID SEARCH – zoptymalizowany pod klasyfikację binarną ===
 param_grid = {
-    'iterations': [300, 500, 800, 1200],
+    'iterations': [10, 20, 50, 100, 200, 300, 500, 600, 1200],
     'depth': [5, 6, 7, 8],
     'learning_rate': [0.005, 0.01, 0.02, 0.03, 0.05, 0.08, 0.1],
     'l2_leaf_reg': [1, 3, 5, 7],
@@ -120,6 +120,8 @@ full_results = pd.DataFrame(grid_result.get('all_params', [])) # Zależy od wers
 # === 5. FINALNY MODEL ===
 final_model = CatBoostClassifier(**best_params,
                                  loss_function='Logloss',
+                                 custom_metric=['AUC', 'Accuracy', 'Precision', 'Recall'],
+                                 # Dodatkowe metryki do monitorowania,
                                  eval_metric='AUC',
                                  random_seed=42,
                                  thread_count=-1,
@@ -131,6 +133,22 @@ final_model.fit(train_pool, eval_set=val_pool, plot=False)
 training_time = time.time() - start_time
 print(f"Czas uczenia: {training_time:.2f} s")
 
+
+
+feature_names = X_scaled.columns.tolist()
+fi = final_model.get_feature_importance(type='PredictionValuesChange')
+fi_df = pd.DataFrame({'Cecha': feature_names, 'Ważność (%)': fi}).sort_values(by='Ważność (%)', ascending=False)
+
+print("\nTop 10 najważniejszych cech:")
+print(fi_df.head(30))
+
+plt.figure(figsize=(10, 6))
+sns.barplot(data=fi_df.head(10), x='Ważność (%)', y='Cecha', palette='viridis')
+plt.title("Najważniejsze cechy – CatBoost")
+plt.tight_layout()
+plt.show()
+
+
 # === 6. ZAPIS MODELU I SCALERA ===
 os.makedirs("models", exist_ok=True)
 final_model.save_model("models/catboost_home_no_lose.cbm")
@@ -140,11 +158,26 @@ print("Model zapisany → models/catboost_home_no_lose.cbm")
 # === 7. ZAPIS WYNIKÓW FINALNYCH DO JSON ===
 os.makedirs("results", exist_ok=True)
 
+# Wyciągamy ostatnie (finalne) wartości ze zbioru walidacyjnego
+history = final_model.get_evals_result()
+val_auc = history['validation']['AUC'][-1]
+val_accuracy = history['validation']['Accuracy'][-1]
+val_precision = history['validation']['Precision'][-1]
+val_recall = history['validation']['Recall'][-1]
+val_logloss = history['validation']['Logloss'][-1]
+
 final_results = {
     "cv_auc_mean": cv_auc_mean,
     "cv_auc_std": cv_auc_std,
     "training_time_sec": training_time,
-    "best_params": best_params
+    "best_params": best_params,
+"final_validation_metrics": {
+        "AUC": float(val_auc),
+        "Accuracy": float(val_accuracy),
+        "Precision": float(val_precision),
+        "Recall": float(val_recall),
+        "Logloss": float(val_logloss)
+    }
 }
 
 with open("results/binary_results.json", "w") as f:
