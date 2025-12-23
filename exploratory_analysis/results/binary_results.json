@@ -1,7 +1,7 @@
 {
     "cv_auc_mean": 0.7354998060758146,
     "cv_auc_std": 0.01736804824313378,
-    "training_time_sec": 0.15047359466552734,
+    "training_time_sec": 0.1550309658050537,
     "best_params": {
         "border_count": 128,
         "depth": 6,
