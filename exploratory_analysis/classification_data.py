@@ -28,7 +28,6 @@ X_train, X_val, y_train, y_val = train_test_split(
     X_temp, y_temp, test_size=1/9, stratify=y_temp, random_state=42
 )
 
-print("\nZapisywanie podzielonych danych do folderu data/split/...")
 os.makedirs("data/split", exist_ok=True)
 
 feature_names = X_scaled.columns.tolist()
