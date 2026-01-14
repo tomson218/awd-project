@@ -8,11 +8,9 @@ from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# === 1. WCZYTAJ PRZYGOTOWANE DANE BINARNE ===
-X_scaled = pd.read_csv("data/X_scaled.csv")           # już po MinMaxScaler
+X_scaled = pd.read_csv("data/X_scaled.csv")
 y_binary = pd.read_csv("data/y_binary.csv")
 
-# Wybieramy naszą klasę: 1 = gospodarz nie przegra (H/D), 0 = goście wygrali
 y = y_binary["HomeNoLose"].values
 
 print(f"X shape: {X_scaled.shape}")
@@ -22,26 +20,19 @@ print(f"Procent meczów gdzie gospodarz nie przegrał: {y.mean():.2%}")
 
 X = X_scaled.values
 
-# --- NOWY PODZIAŁ NA TRZY ZBIORY: TRAIN (80%), VALIDATION (10%), TEST (10%) ---
-
-# Krok 1: Podział na 90% (tymczasowy) i 10% (testowy)
 X_temp, X_test, y_temp, y_test = train_test_split(
     X, y, test_size=0.1, stratify=y, random_state=42
 )
 
-# Krok 2: Podział tymczasowego zbioru (90%) na 80% (treningowy) i 10% (walidacyjny)
-# (1/9 z 90% to 10%)
 X_train, X_val, y_train, y_val = train_test_split(
     X_temp, y_temp, test_size=1/9, stratify=y_temp, random_state=42
 )
 
-# === ZAPIS PODZIELONYCH ZBIORÓW DO CSV ===
 print("\nZapisywanie podzielonych danych do folderu data/split/...")
 os.makedirs("data/split", exist_ok=True)
 
 feature_names = X_scaled.columns.tolist()
 
-# Tworzenie DataFrames dla Walidacji
 X_train_df = pd.DataFrame(X_train, columns=feature_names)
 X_val_df   = pd.DataFrame(X_val,   columns=feature_names)
 X_test_df  = pd.DataFrame(X_test,  columns=feature_names)
@@ -49,7 +40,6 @@ y_train_df = pd.DataFrame(y_train, columns=["HomeNoLose"])
 y_val_df   = pd.DataFrame(y_val,   columns=["HomeNoLose"])
 y_test_df  = pd.DataFrame(y_test,  columns=["HomeNoLose"])
 
-# Zapis do CSV
 X_train_df.to_csv("data/split/X_train.csv", index=False)
 X_val_df.to_csv(  "data/split/X_val.csv",   index=False)
 X_test_df.to_csv( "data/split/X_test.csv",  index=False)
@@ -63,36 +53,32 @@ print("   → X_test.csv   :", X_test_df.shape)
 print("   → y_train.csv  :", y_train_df.shape)
 print("   → y_val.csv    :", y_val_df.shape)
 print("   → y_test.csv   :", y_test_df.shape)
-print("Zbiory zapisane!\n")
 
 train_pool = Pool(X_train, y_train)
 val_pool   = Pool(X_val, y_val)
 test_pool  = Pool(X_test, y_test)
 
 
-# === 3. GRID SEARCH – zoptymalizowany pod klasyfikację binarną ===
 param_grid = {
     'iterations': [10, 20, 50, 100, 200, 300, 500, 600, 1200],
     'depth': [5, 6, 7, 8],
     'learning_rate': [0.005, 0.01, 0.02, 0.03, 0.05, 0.08, 0.1],
     'l2_leaf_reg': [1, 3, 5, 7],
     'border_count': [128, 254],
-    #'scale_pos_weight': [1.0, 1.5, 2.0]   # ważenie klasy mniejszościowej (AwayWin)
 }
 
 model = CatBoostClassifier(
     loss_function='Logloss',
-    eval_metric='AUC',           # kluczowa metryka w zakładach!
+    eval_metric='AUC',
     random_seed=42,
     thread_count=-1,
     verbose=False,
     early_stopping_rounds=100
 )
 
-print("\nGrid Search w toku (może potrwać 2-10 min)...")
+print("\nMetoda siatkowa...")
 grid_result = model.grid_search(param_grid, train_pool, cv=5, plot=False, verbose=1)
 
-# === 4. NAJLEPSZE PARAMETRY Z CV ===
 best_params = grid_result["params"]
 cv_auc_mean = max(grid_result["cv_results"]["test-AUC-mean"])
 cv_auc_std  = grid_result["cv_results"]["test-AUC-std"][np.argmax(grid_result["cv_results"]["test-AUC-mean"])]
@@ -100,40 +86,30 @@ cv_auc_std  = grid_result["cv_results"]["test-AUC-std"][np.argmax(grid_result["c
 print(f"\n5-fold CV – AUC: {cv_auc_mean:.4f} ± {cv_auc_std:.4f}")
 
 
-# 1. Pobieramy wyniki wszystkich kombinacji
 cv_results = grid_result["cv_results"]
-params_list = grid_result["params"] # Lista parametrów dla każdego kroku (jeśli dostępna) lub parametry z siatki
+params_list = grid_result["params"]
 
-# CatBoost przechowuje wyniki metryk w listach pod kluczami np. 'test-AUC-mean'
-# Tworzymy DataFrame z wyników metryk
 df_metrics = pd.DataFrame(cv_results)
 
-# 2. Dodajemy informacje o parametrach (jeśli grid_search ich nie dołączył automatycznie do cv_results)
-# Uwaga: W CatBoost grid_result['cv_results'] często zawiera historię iteracji dla konkretnych prób.
-# Aby uzyskać tabelę wszystkich kombinacji, najlepiej użyć poniższego podejścia:
 
-results_df = pd.DataFrame(grid_result['params'], index=[0]) # Jeśli to pojedynczy wynik
-# Jeśli chcesz pełną historię wszystkich sprawdzonych kombinacji:
-full_results = pd.DataFrame(grid_result.get('all_params', [])) # Zależy od wersji CatBoost
+results_df = pd.DataFrame(grid_result['params'], index=[0])
+
+full_results = pd.DataFrame(grid_result.get('all_params', []))
 
 
-# === 5. FINALNY MODEL ===
 final_model = CatBoostClassifier(**best_params,
                                  loss_function='Logloss',
                                  custom_metric=['AUC', 'Accuracy', 'Precision', 'Recall'],
-                                 # Dodatkowe metryki do monitorowania,
                                  eval_metric='AUC',
                                  random_seed=42,
                                  thread_count=-1,
                                  verbose=200)
 
-print("\nTrenowanie finalnego modelu...")
+print("\nUczenie finalnego modelu...")
 start_time = time.time()
 final_model.fit(train_pool, eval_set=val_pool, plot=False)
 training_time = time.time() - start_time
 print(f"Czas uczenia: {training_time:.2f} s")
-
-
 
 feature_names = X_scaled.columns.tolist()
 fi = final_model.get_feature_importance(type='PredictionValuesChange')
@@ -149,16 +125,13 @@ plt.tight_layout()
 plt.show()
 
 
-# === 6. ZAPIS MODELU I SCALERA ===
 os.makedirs("models", exist_ok=True)
 final_model.save_model("models/catboost_home_no_lose.cbm")
 print("Model zapisany → models/catboost_home_no_lose.cbm")
 
-
-# === 7. ZAPIS WYNIKÓW FINALNYCH DO JSON ===
 os.makedirs("results", exist_ok=True)
 
-# Wyciągamy ostatnie (finalne) wartości ze zbioru walidacyjnego
+# wartości ze zbioru walidacyjnego
 history = final_model.get_evals_result()
 val_auc = history['validation']['AUC'][-1]
 val_accuracy = history['validation']['Accuracy'][-1]
@@ -184,10 +157,6 @@ with open("results/binary_results.json", "w") as f:
     json.dump(final_results, f, indent=4)
 
 print("Wyniki zapisane → results/binary_results.json")
-
-
-
-
 
 """
          Cecha  Ważność (%)

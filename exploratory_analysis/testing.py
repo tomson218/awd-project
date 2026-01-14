@@ -1,5 +1,4 @@
-# __classification_binary.py – FINALNA WERSJA BINARNA (HomeNoLose vs AwayWin)
-from sklearn.metrics import accuracy_score, f1_score, classification_report, confusion_matrix, roc_auc_score, log_loss
+from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, roc_auc_score, log_loss
 from catboost import CatBoostClassifier, Pool
 import pandas as pd
 import numpy as np
@@ -7,7 +6,6 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import os
 import json
-from sklearn.model_selection import train_test_split
 
 final_model = CatBoostClassifier()
 final_model.load_model("models/catboost_home_no_lose.cbm")
@@ -88,9 +86,7 @@ with open("results/binary_results.json", "w", encoding="utf-8") as f:
     json.dump(results, f, indent=2, ensure_ascii=False)
 
 
-#print("\n" + "="*130)
 print("\n\n20 MECZÓW Z DANYCH TESTOWYCH")
-#print("="*130)
 
 np.random.seed(42)
 idx = np.random.choice(len(X_test), size=20, replace=False)
