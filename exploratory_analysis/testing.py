@@ -6,17 +6,15 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 import os
-import time
 import json
 from sklearn.model_selection import train_test_split
 
-# 1. WCZYTANIE MODELU
-final_model = CatBoostClassifier()                    # pusty obiekt
-final_model.load_model("models/catboost_home_no_lose.cbm")   # ← tu podajesz swoją ścieżkę
+final_model = CatBoostClassifier()
+final_model.load_model("models/catboost_home_no_lose.cbm")
 
 
 X_test  = pd.read_csv("data/split/X_test.csv")
-y_test  = pd.read_csv("data/split/y_test.csv") ["HomeNoLose"]   # as Series
+y_test  = pd.read_csv("data/split/y_test.csv") ["HomeNoLose"]
 
 X_scaled = pd.read_csv("data/X_scaled.csv")
 
@@ -35,12 +33,8 @@ val_recall = binary_results["final_validation_metrics"]["Recall"]
 val_logloss = binary_results["final_validation_metrics"]["Logloss"]
 
 
-
-# Wyciągamy ostatnie (finalne) wartości ze zbioru walidacyjnego
-
-
-print(cv_auc_mean)
-print(training_time)
+#print(cv_auc_mean)
+#print(training_time)
 print(best_params)
 
 
@@ -52,7 +46,7 @@ f1   = f1_score(y_test, y_pred)
 auc  = roc_auc_score(y_test, y_pred_proba)
 logloss_val = log_loss(y_test, y_pred_proba)
 
-print(f"\n=== WYNIKI NA ZBIORZE TESTOWYM ===")
+print(f"\nWYNIKI TESTOWANIA")
 print(f"Accuracy : {acc:.4f}")
 print(f"F1-score : {f1:.4f}")
 print(f"ROC AUC  : {auc:.4f}")
@@ -70,8 +64,6 @@ plt.xlabel('Przewidywane')
 plt.title(f'Macierz pomyłek – AUC: {auc:.4f}')
 plt.tight_layout()
 plt.show()
-
-
 
 results = {
     "task": "HomeNoLose vs AwayWin",
@@ -95,21 +87,18 @@ os.makedirs("results", exist_ok=True)
 with open("results/binary_results.json", "w", encoding="utf-8") as f:
     json.dump(results, f, indent=2, ensure_ascii=False)
 
-print("\nWyniki zapisane → results/testing_results.json")
 
-print("\n" + "="*130)
-print("15 LOSOWYCH MECZÓW Z TESTU – RZECZYWISTE vs PRZEWIDYWANE + PRAWDOPODOBIEŃSTWO")
-print("="*130)
+#print("\n" + "="*130)
+print("\n\n20 MECZÓW Z DANYCH TESTOWYCH")
+#print("="*130)
 
 np.random.seed(42)
-idx = np.random.choice(len(X_test), size=15, replace=False)
+idx = np.random.choice(len(X_test), size=20, replace=False)
 
 display_df = X_scaled.iloc[idx].copy()
 display_df = display_df[['C_LTA', 'HomeElo', 'AwayElo', 'Form3Home', 'Form5Home', 'Form3Away', 'Form5Away', 'OddDraw', 'OddAway', 'MaxHome', 'MaxDraw', 'MaxAway', 'Over25',
                 'Under25', 'MaxOver25', 'MaxUnder25', 'HandiSize', 'HandiHome', 'HandiAway', 'C_LTH', 'C_VHD', 'C_VAD', 'C_PHB',
-
-                                                                                                                                               'C_HTB']]
-
+                                                                                                                                           'C_HTB']]
 display_df['P(HomeNoLose)'] = y_pred_proba[idx].round(4)
 display_df['Przewidywana'] = ['HomeNoLose' if p >= 0.5 else 'AwayWin' for p in y_pred_proba[idx]]
 display_df['Rzeczywista'] = ['HomeNoLose' if real == 1 else 'AwayWin' for real in y_test[idx]]
@@ -122,11 +111,7 @@ display_df = display_df.rename_axis('Nr')
 
 print(display_df.to_string(float_format="{:.2f}".format))
 
-# === ZAPIS DO CSV – poprawnie! ===
 os.makedirs("results", exist_ok=True)
 csv_path = "results/15_przykladowych_meczow_test.csv"
 
-# Poprawna metoda: to_csv, nie to_excel!
 display_df.to_csv(csv_path, index=True, encoding='utf-8-sig')
-
-print(f"\n15 przykładów zapisano do pliku CSV → {csv_path}")

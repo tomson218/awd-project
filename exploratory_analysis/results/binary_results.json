@@ -1,19 +1,23 @@
 {
-    "cv_auc_mean": 0.7354998060758146,
-    "cv_auc_std": 0.01736804824313378,
-    "training_time_sec": 0.1550309658050537,
-    "best_params": {
-        "border_count": 128,
-        "depth": 6,
-        "learning_rate": 0.08,
-        "l2_leaf_reg": 1,
-        "iterations": 10
-    },
-    "final_validation_metrics": {
-        "AUC": 0.7254237288135593,
-        "Accuracy": 0.6983758700696056,
-        "Precision": 0.7398255813953488,
-        "Recall": 0.8627118644067797,
-        "Logloss": 0.5768408740363453
-    }
+  "task": "HomeNoLose vs AwayWin",
+  "cv_auc_mean": 0.7354998060758146,
+  "cv_auc_std": 0.01736804824313378,
+  "test_accuracy": 0.7056778679026651,
+  "test_f1": 0.8021806853582555,
+  "test_auc": 0.740056111276998,
+  "training_time_sec": 0.0865476131439209,
+  "best_params": {
+    "border_count": 128,
+    "depth": 6,
+    "learning_rate": 0.08,
+    "l2_leaf_reg": 1,
+    "iterations": 10
+  },
+  "final_validation_metrics": {
+    "AUC": 0.7254237288135593,
+    "Accuracy": 0.6983758700696056,
+    "Precision": 0.7398255813953488,
+    "Recall": 0.8627118644067797,
+    "Logloss": 0.5768408740363453
+  }
 }
