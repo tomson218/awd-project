@@ -154,9 +154,3 @@ Kaggle → Pobierz dane → Filtr lig/dat → Czyszczenie →
 ├── statistical_analysis: Statystyki + 9 wizualizacji
 └── exploratory_analysis: Normalizacja → CatBoost → Grid Search → Test → Wyniki
 ```
-
----
-
-## 📝 Licencja
-
-Projekt edukacyjny — Analiza danych i Machine Learning.
