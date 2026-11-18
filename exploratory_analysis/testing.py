@@ -31,8 +31,6 @@ val_recall = binary_results["final_validation_metrics"]["Recall"]
 val_logloss = binary_results["final_validation_metrics"]["Logloss"]
 
 
-#print(cv_auc_mean)
-#print(training_time)
 print(best_params)
 
 

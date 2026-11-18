@@ -21,10 +21,7 @@ def calculate_values(matches_after_cleaning: pd.DataFrame) -> pd.DataFrame:
 
     return ranges
 
-"""3. Wyznaczenie współczynnika korelacji liniowej Pearsona pomiędzy wybranymi parami
-zmiennych (lub autokorelacji dla danych jednowymiarowych)."""
 def pearson_correlation():
-    # kodowanie
     HTResult = matches_after_cleaning["HTResult"]
     FTResult = matches_after_cleaning["FTResult"]
 
@@ -35,20 +32,17 @@ def pearson_correlation():
     r, p_value = pearsonr(HT_num, FT_num)
     return r, p_value
 
-"""4. Dokonanie prostej regresji liniowej pomiędzy wybranymi zmiennymi. Należy wyznaczyć
-wzór regresji."""
 def linear_regression():
     X = np.concatenate([
         matches_after_cleaning["HomeTarget"].values,
         matches_after_cleaning["AwayTarget"].values
-    ]).reshape(-1, 1)  # -1 to dopasowanie pod liczbę wierszy, 1 - zdefiniowanie jednego wymiaru
+    ]).reshape(-1, 1)
 
     Y = np.concatenate([
         matches_after_cleaning["FTHome"].values,
         matches_after_cleaning["FTAway"].values
     ])
 
-    # model regresji
     model = LinearRegression()
     model.fit(X, Y)
 
@@ -59,15 +53,8 @@ def linear_regression():
 
 
 def correlation_matrix(matches_after_cleaning: pd.DataFrame) -> pd.DataFrame:
-    """
-    Oblicza i zwraca macierz korelacji Pearsona dla wszystkich
-    zmiennych numerycznych w DataFrame.
-    """
-    # 1. Wybierz tylko kolumny numeryczne
     numeric_df = matches_after_cleaning.select_dtypes(include=np.number)
 
-    # 2. Oblicz macierz korelacji Pearsona
-    # Domyślna metoda w .corr() to 'pearson'
     correlation_matrix = numeric_df.corr()
 
     return correlation_matrix
@@ -85,10 +72,8 @@ def descriptive_stats_all():
     print("Macierz korelacji:\n")
     print(matrix)
 
-    # Zapis macierzy korelacji do Excela
     output_path = "./macierz_korelacji.xlsx"
 
-    # Użyj pandas do zapisu – automatycznie ładnie sformatuje
     matrix.to_excel(output_path, sheet_name='Korelacje', float_format="%.4f")
 
     print(f"Macierz korelacji zapisana do pliku Excel: {output_path}")

@@ -130,7 +130,6 @@ print("Model zapisany → models/catboost_home_no_lose.cbm")
 
 os.makedirs("results", exist_ok=True)
 
-# wartości ze zbioru walidacyjnego
 history = final_model.get_evals_result()
 val_auc = history['validation']['AUC'][-1]
 val_accuracy = history['validation']['Accuracy'][-1]

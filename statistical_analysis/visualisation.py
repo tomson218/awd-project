@@ -50,7 +50,6 @@ def bar_chart():
     plt.figure(figsize=(10, 6))
     bars = plt.bar(labels, counts, color=['#9467bd', '#1f77b4', '#2ca02c', '#d62728', '#ff7f0e'])
 
-    # Liczby na slupkach
     for bar in bars:
         height = bar.get_height()
         plt.text(bar.get_x() + bar.get_width() / 2., height + 0.3,
@@ -79,7 +78,7 @@ def bar_chart_cards_global():
         'Czerwone (goście)'
     ]
     values = [avg_yellow_home, avg_yellow_away, avg_red_home, avg_red_away]
-    colors = ['#ffcc00', '#ffcc00', '#ff3333', '#ff3333']  # żółty i czerwony
+    colors = ['#ffcc00', '#ffcc00', '#ff3333', '#ff3333']
     edge_colors = ['#cc9900', '#cc9900', '#cc0000', '#cc0000']
 
     plt.figure(figsize=(10, 6))
@@ -101,14 +100,11 @@ def bar_chart_cards_global():
             fontsize=12, fontweight='bold', color='black'
         )
 
-    # --- 4. Formatowanie ---
     plt.title('Średnia liczba kartek na mecz z podziałem na gospodarza i gościa',
               fontsize=16, pad=20, fontweight='bold')
     plt.ylabel('Średnia liczba kartek', fontsize=12)
     plt.ylim(0, max(values) * 1.3)
     plt.grid(axis='y', linestyle='--', alpha=0.4)
-
-    # Legenda
 
     legend_elements = [
         Patch(facecolor='#ffcc00', edgecolor='#cc9900', label='Żółta kartka'),
@@ -119,8 +115,6 @@ def bar_chart_cards_global():
     plt.tight_layout()
     plt.show()
 
-
-# --- 3. Szereg czasowy (dla predykcji) ---
 def time_series_plot():
     clubs_to_compare = ['Real Madrid', 'Ajax', 'Bayern Munich', 'Inter', 'Paris SG']
 
@@ -141,7 +135,6 @@ def time_series_plot():
     markers = ['o', 's', '^', 'D', 'v']
     color_map = dict(zip(clubs_to_compare, colors))
 
-    # Rysuj linię dla każdego klubu
     for club in clubs_to_compare:
         data = club_data[club_data['club'] == club]
         plt.plot(
@@ -171,14 +164,13 @@ def time_series_plot():
     plt.show()
 
 
-# --- 4. Histogram ---
 def histogram_home():
     goals = matches_after_cleaning['FTHome'].dropna().astype(int)
 
     plt.figure(figsize=(11, 6))
     n, bins, patches = plt.hist(
         goals,
-        bins=range(0, goals.max() + 2),  # zostaje
+        bins=range(0, goals.max() + 2),
         color='#2E86AB',
         edgecolor='black',
         alpha=0.8
@@ -193,15 +185,13 @@ def histogram_home():
     plt.tight_layout()
     plt.show()
 
-
-# --- 4. Histogram ---
 def histogram_away():
     goals = matches_after_cleaning['FTAway'].dropna().astype(int)
 
     plt.figure(figsize=(11, 6))
     n, bins, patches = plt.hist(
         goals,
-        bins=range(0, goals.max() + 2),  # zostaje
+        bins=range(0, goals.max() + 2),
         color='#2E86AB',
         edgecolor='black',
         alpha=0.8
@@ -216,8 +206,6 @@ def histogram_away():
     plt.tight_layout()
     plt.show()
 
-
-# --- 5. Wykres pudełkowy ---
 def box_plot():
     divisions = matches_after_cleaning['Division'].unique()
     all_elo_ratings_data = [] 
@@ -233,7 +221,6 @@ def box_plot():
     for div in divisions:
         df_div = matches_after_cleaning[matches_after_cleaning['Division'] == div]
         
-        # Łączenie
         elo_ratings = df_div['HomeElo'].dropna().tolist() + df_div['AwayElo'].dropna().tolist()
         all_elo_ratings_data.append(elo_ratings)
 
@@ -247,7 +234,6 @@ def box_plot():
     plt.title("Rozkład dla wskaznika Elo wg poszczególnych lig")
     plt.show()
 
-# --- 6. Wykres wiolinowy ---
 def violin_plot():
     league_names = {
         'I1': 'Serie A',
@@ -265,7 +251,6 @@ def violin_plot():
     for div in divisions:
         df_div = matches_after_cleaning[matches_after_cleaning['Division'] == div]
 
-        # Łączenie fauli
         fouls = pd.concat([
             df_div['HomeFouls'].dropna(),
             df_div['AwayFouls'].dropna()
@@ -276,12 +261,10 @@ def violin_plot():
         labels.append(label)
         medians.append(fouls.median())
 
-    # --- 3. Sortowanie: od ligi
     sorted_indices = np.argsort(medians)[::-1]
     all_fouls_data = [all_fouls_data[i] for i in sorted_indices]
     labels = [labels[i] for i in sorted_indices]
 
-    # --- 4. Rysowanie wykresu wiolinowego ---
     plt.figure(figsize=(14, 8))
     parts = plt.violinplot(
         all_fouls_data,
@@ -313,24 +296,18 @@ def violin_plot():
     plt.tight_layout()
     plt.show()
 
-    #return plt.gcf()
-
-# --- 7. Wykres rozrzutu + regresja liniowa ---
 def scatter_plot():
     X_home = matches_after_cleaning["HomeTarget"].values.reshape(-1, 1)
     Y_home = matches_after_cleaning["FTHome"].values
     X_away = matches_after_cleaning["AwayTarget"].values.reshape(-1, 1)
     Y_away = matches_after_cleaning["FTAway"].values
 
-    # regresje
     model_home = LinearRegression().fit(X_home, Y_home)
     model_away = LinearRegression().fit(X_away, Y_away)
 
-    # współczynniki
     a_home, b_home = model_home.coef_[0], model_home.intercept_
     a_away, b_away = model_away.coef_[0], model_away.intercept_
 
-    # tworzymy dwa wykresy obok siebie
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 
     axes[0].scatter(X_home, Y_home, color='blue', alpha=0.6, label='Dane')
@@ -340,7 +317,6 @@ def scatter_plot():
     axes[0].set_ylabel("Liczba bramek gospodarza strzelona w meczu")
     axes[0].legend()
 
-    # --- AWAY ---
     axes[1].scatter(X_away, Y_away, color='green', alpha=0.6, label='Dane')
     axes[1].plot(X_away, model_away.predict(X_away), color='red', label=f'y = {a_away:.2f}x + {b_away:.2f}')
     axes[1].set_title("Regresja: Strzałów celnych vs Liczba goli strzelonych w meczu przez gościa")
